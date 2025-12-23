@@ -3,137 +3,132 @@
 <head>
 <meta charset="UTF-8">
 <title>Quỳnh Anh đập Hải Việt</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <style>
 *{box-sizing:border-box}
 body{
   margin:0;
-  min-height:100vh;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto;
   background: radial-gradient(1200px 700px at 30% 10%, #1e2b5a, #0b1020);
   color:#fff;
-  display:flex;
-  justify-content:center;
-  padding:20px;
 }
 .container{
-  width:100%;
-  max-width:1200px;
-  display:grid;
-  grid-template-columns: 2fr 1fr;
-  gap:20px;
-}
-.panel{
-  background: rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:22px;
-  padding:18px;
-  box-shadow: 0 25px 60px rgba(0,0,0,.4);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  padding:14px;
 }
 h1{
-  margin:0 0 14px;
-  font-size:26px;
-  letter-spacing:.4px;
+  text-align:center;
+  margin:6px 0 10px;
+  font-size:22px;
+}
+
+/* SCORE */
+.score{
+  text-align:center;
+  font-size:16px;
+  margin-bottom:10px;
+  opacity:.9;
 }
 
 /* GAME BOARD */
 .board{
+  flex:1;
   position:relative;
-  width:100%;
-  height:520px;
   border-radius:24px;
   background:
-    radial-gradient(800px 500px at 70% 20%, rgba(56,189,248,.2), transparent 60%),
-    radial-gradient(700px 500px at 20% 90%, rgba(167,139,250,.2), transparent 60%),
-    rgba(0,0,0,.25);
-  border:1px solid rgba(255,255,255,.15);
+    radial-gradient(800px 500px at 70% 20%, rgba(56,189,248,.25), transparent 60%),
+    radial-gradient(700px 500px at 20% 90%, rgba(167,139,250,.25), transparent 60%),
+    rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.18);
   overflow:hidden;
 }
+
+/* DOG */
 .dog{
   position:absolute;
-  width:160px;
-  height:160px;
-  border-radius:26px;
-  background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.2);
+  width:220px;
+  height:220px;
+  border-radius:30px;
+  background: rgba(0,0,0,.4);
+  border:1px solid rgba(255,255,255,.25);
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  cursor:pointer;
   transform:translate(-50%,-50%);
-  transition:transform .05s;
+  touch-action:manipulation;
 }
-.dog:active{transform:translate(-50%,-50%) scale(.95)}
-.dog .emoji{font-size:64px}
+.dog.hit{
+  animation: hit .18s;
+}
+@keyframes hit{
+  0%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(.9)}
+  100%{transform:translate(-50%,-50%) scale(1)}
+}
+.dog .emoji{
+  font-size:90px;
+}
 
+/* BUBBLE */
 .bubble{
   position:absolute;
-  top:-10px;
+  top:-12px;
   left:50%;
   transform:translate(-50%,-100%);
-  background:rgba(0,0,0,.75);
-  border:1px solid rgba(255,255,255,.25);
+  background:rgba(0,0,0,.8);
+  border:1px solid rgba(255,255,255,.3);
   padding:10px 14px;
-  border-radius:16px;
+  border-radius:18px;
   font-size:14px;
-  white-space:nowrap;
+  text-align:center;
   opacity:0;
-  transition:.2s;
+  transition:.25s;
+  white-space:nowrap;
 }
 .bubble.show{opacity:1}
 
-/* LOG */
-.log{
-  height:420px;
-  overflow:auto;
-  font-size:13px;
-  line-height:1.45;
-  color:rgba(255,255,255,.85);
-  white-space:pre-wrap;
-}
-
 /* CONTROLS */
 .controls{
-  margin-top:14px;
   display:flex;
   gap:10px;
+  margin-top:12px;
 }
 button{
-  padding:10px 16px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.2);
-  background:rgba(255,255,255,.08);
+  flex:1;
+  padding:12px;
+  font-size:15px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.1);
   color:#fff;
-  cursor:pointer;
-  font-weight:600;
 }
-button:hover{background:rgba(255,255,255,.12)}
+button:active{transform:scale(.97)}
 </style>
 </head>
-<body>
 
+<body>
 <div class="container">
-  <!-- GAME -->
-  <div class="panel">
-    <h1>🐶 Quỳnh Anh đập Hải Việt</h1>
-    <div class="board" id="board">
-      <div class="dog" id="dog">
-        <div class="bubble" id="bubble"></div>
-        <div class="emoji">🐶</div>
-      </div>
-    </div>
-    <div class="controls">
-      <button onclick="start()">▶ Start</button>
-      <button onclick="pause()">⏸ Pause</button>
-      <button onclick="resetGame()">🔄 Reset</button>
+  <h1>🐶 Quỳnh Anh đập Hải Việt</h1>
+
+  <div class="score" id="score">
+    Số lần Hải Việt bị Quỳnh Anh đập: 0
+  </div>
+
+  <div class="board" id="board">
+    <div class="dog" id="dog">
+      <div class="bubble" id="bubble"></div>
+      <div class="emoji">🐶</div>
     </div>
   </div>
 
-  <!-- LOG -->
-  <div class="panel">
-    <h1>📜 Nhật ký “cún bị đập”</h1>
-    <div class="log" id="log">Nhấn Start để bắt đầu.</div>
+  <div class="controls">
+    <button onclick="start()">▶ Start</button>
+    <button onclick="resetGame()">🔄 Reset</button>
   </div>
 </div>
 
@@ -141,62 +136,71 @@ button:hover{background:rgba(255,255,255,.12)}
 const board = document.getElementById("board");
 const dog = document.getElementById("dog");
 const bubble = document.getElementById("bubble");
-const logEl = document.getElementById("log");
+const scoreEl = document.getElementById("score");
 
 let hits = 0;
 let running = false;
-let moveTimer = null;
 
 function moveDog(){
   const r = board.getBoundingClientRect();
-  const x = Math.random()*(r.width-180)+90;
-  const y = Math.random()*(r.height-180)+90;
+  const x = Math.random()*(r.width-240)+120;
+  const y = Math.random()*(r.height-240)+120;
   dog.style.left = x+"px";
-  dog.style.top = y+"px";
+  dog.style.top  = y+"px";
 }
 
-function speak(n){
-  let text="";
-  if(n%8===0) text="Bạn tha cho tôi nha T_T";
-  else if(n%6===0) text="Tuy bạn ghét tôi nhưng tôi vẫn quý bạn lắm ó";
-  else if(n%5===0) text="thôi mà, bạn đừng ghét tôi nữa";
-  else if(n%3===0) text="bạn ghét tôi vậy à";
+function showBubble(text){
+  bubble.textContent = text;
+  bubble.classList.add("show");
+  setTimeout(()=>bubble.classList.remove("show"),1500);
+}
 
-  if(text){
-    bubble.textContent=text;
-    bubble.classList.add("show");
-    setTimeout(()=>bubble.classList.remove("show"),1300);
+function specialMessage(){
+  if(hits === 36){
+    showBubble("🎉 Chúc mừng bạn đã đập Hải Việt được 36 lần, xin tặng bạn 1 bó rau má 🥬");
+    return;
+  }
+  if(hits === 20){
+    showBubble("Bạn đừng đập nữa, Hải Việt đau lắm rồi :((");
   }
 }
 
-dog.onclick = ()=>{
+function hit(){
   if(!running) return;
   hits++;
-  logEl.textContent =
-    `Quỳnh Anh đã đập chó Hải Việt ${hits} lần\n` + logEl.textContent;
-  speak(hits);
+  scoreEl.textContent =
+    `Số lần Hải Việt bị Quỳnh Anh đập: ${hits}`;
+
+  dog.classList.remove("hit");
+  void dog.offsetWidth;
+  dog.classList.add("hit");
+
+  if(navigator.vibrate){
+    navigator.vibrate(30);
+  }
+
+  specialMessage();
   moveDog();
-};
+}
+
+dog.addEventListener("touchstart", e=>{
+  e.preventDefault();
+  hit();
+});
+dog.addEventListener("click", hit);
 
 function start(){
-  if(running) return;
-  running=true;
-  logEl.textContent = "Game bắt đầu.\n"+logEl.textContent;
+  running = true;
   moveDog();
-  moveTimer=setInterval(moveDog,700);
-}
-function pause(){
-  running=!running;
 }
 function resetGame(){
-  running=false;
-  clearInterval(moveTimer);
-  hits=0;
-  logEl.textContent="Đã reset.\n";
+  running = false;
+  hits = 0;
+  scoreEl.textContent =
+    "Số lần Hải Việt bị Quỳnh Anh đập: 0";
   bubble.classList.remove("show");
 }
 moveDog();
 </script>
-
 </body>
 </html>
