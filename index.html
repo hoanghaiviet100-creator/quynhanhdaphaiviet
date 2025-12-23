@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Quỳnh Anh đập Hải Việt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: radial-gradient(1200px 700px at 30% 10%, #1e2b5a, #0b1020);
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+.container{
+  width:100%;
+  max-width:1200px;
+  display:grid;
+  grid-template-columns: 2fr 1fr;
+  gap:20px;
+}
+.panel{
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;
+  padding:18px;
+  box-shadow: 0 25px 60px rgba(0,0,0,.4);
+}
+h1{
+  margin:0 0 14px;
+  font-size:26px;
+  letter-spacing:.4px;
+}
+
+/* GAME BOARD */
+.board{
+  position:relative;
+  width:100%;
+  height:520px;
+  border-radius:24px;
+  background:
+    radial-gradient(800px 500px at 70% 20%, rgba(56,189,248,.2), transparent 60%),
+    radial-gradient(700px 500px at 20% 90%, rgba(167,139,250,.2), transparent 60%),
+    rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.15);
+  overflow:hidden;
+}
+.dog{
+  position:absolute;
+  width:160px;
+  height:160px;
+  border-radius:26px;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.2);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transform:translate(-50%,-50%);
+  transition:transform .05s;
+}
+.dog:active{transform:translate(-50%,-50%) scale(.95)}
+.dog .emoji{font-size:64px}
+
+.bubble{
+  position:absolute;
+  top:-10px;
+  left:50%;
+  transform:translate(-50%,-100%);
+  background:rgba(0,0,0,.75);
+  border:1px solid rgba(255,255,255,.25);
+  padding:10px 14px;
+  border-radius:16px;
+  font-size:14px;
+  white-space:nowrap;
+  opacity:0;
+  transition:.2s;
+}
+.bubble.show{opacity:1}
+
+/* LOG */
+.log{
+  height:420px;
+  overflow:auto;
+  font-size:13px;
+  line-height:1.45;
+  color:rgba(255,255,255,.85);
+  white-space:pre-wrap;
+}
+
+/* CONTROLS */
+.controls{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+}
+button{
+  padding:10px 16px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  cursor:pointer;
+  font-weight:600;
+}
+button:hover{background:rgba(255,255,255,.12)}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- GAME -->
+  <div class="panel">
+    <h1>🐶 Quỳnh Anh đập Hải Việt</h1>
+    <div class="board" id="board">
+      <div class="dog" id="dog">
+        <div class="bubble" id="bubble"></div>
+        <div class="emoji">🐶</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="start()">▶ Start</button>
+      <button onclick="pause()">⏸ Pause</button>
+      <button onclick="resetGame()">🔄 Reset</button>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="panel">
+    <h1>📜 Nhật ký “cún bị đập”</h1>
+    <div class="log" id="log">Nhấn Start để bắt đầu.</div>
+  </div>
+</div>
+
+<script>
+const board = document.getElementById("board");
+const dog = document.getElementById("dog");
+const bubble = document.getElementById("bubble");
+const logEl = document.getElementById("log");
+
+let hits = 0;
+let running = false;
+let moveTimer = null;
+
+function moveDog(){
+  const r = board.getBoundingClientRect();
+  const x = Math.random()*(r.width-180)+90;
+  const y = Math.random()*(r.height-180)+90;
+  dog.style.left = x+"px";
+  dog.style.top = y+"px";
+}
+
+function speak(n){
+  let text="";
+  if(n%8===0) text="Bạn tha cho tôi nha T_T";
+  else if(n%6===0) text="Tuy bạn ghét tôi nhưng tôi vẫn quý bạn lắm ó";
+  else if(n%5===0) text="thôi mà, bạn đừng ghét tôi nữa";
+  else if(n%3===0) text="bạn ghét tôi vậy à";
+
+  if(text){
+    bubble.textContent=text;
+    bubble.classList.add("show");
+    setTimeout(()=>bubble.classList.remove("show"),1300);
+  }
+}
+
+dog.onclick = ()=>{
+  if(!running) return;
+  hits++;
+  logEl.textContent =
+    `Quỳnh Anh đã đập chó Hải Việt ${hits} lần\n` + logEl.textContent;
+  speak(hits);
+  moveDog();
+};
+
+function start(){
+  if(running) return;
+  running=true;
+  logEl.textContent = "Game bắt đầu.\n"+logEl.textContent;
+  moveDog();
+  moveTimer=setInterval(moveDog,700);
+}
+function pause(){
+  running=!running;
+}
+function resetGame(){
+  running=false;
+  clearInterval(moveTimer);
+  hits=0;
+  logEl.textContent="Đã reset.\n";
+  bubble.classList.remove("show");
+}
+moveDog();
+</script>
+
+</body>
+</html>
