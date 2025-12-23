@@ -11,7 +11,7 @@ content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable
 body{
   margin:0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto;
-  background: radial-gradient(1200px 700px at 30% 10%, #1e2b5a, #0b1020);
+  background: radial-gradient(1200px 700px at 30% 10%, #ffb6c1, #ff69b4);
   color:#fff;
 }
 .container{
@@ -22,39 +22,43 @@ body{
 }
 h1{
   text-align:center;
-  margin:6px 0 10px;
+  margin:6px 0 8px;
   font-size:22px;
 }
-
-/* SCORE */
-.score{
+.score, .timer{
   text-align:center;
-  font-size:16px;
-  margin-bottom:10px;
-  opacity:.9;
+  font-size:15px;
+  margin-bottom:6px;
 }
 
-/* GAME BOARD */
+/* TIME SELECT */
+.time-select{
+  text-align:center;
+  margin-bottom:8px;
+}
+select{
+  padding:6px 10px;
+  border-radius:10px;
+  border:none;
+  font-size:14px;
+}
+
+/* GAME */
 .board{
   flex:1;
   position:relative;
   border-radius:24px;
-  background:
-    radial-gradient(800px 500px at 70% 20%, rgba(56,189,248,.25), transparent 60%),
-    radial-gradient(700px 500px at 20% 90%, rgba(167,139,250,.25), transparent 60%),
-    rgba(0,0,0,.3);
-  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.3);
   overflow:hidden;
 }
-
-/* DOG */
 .dog{
   position:absolute;
   width:220px;
   height:220px;
   border-radius:30px;
-  background: rgba(0,0,0,.4);
-  border:1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.4);
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -63,16 +67,14 @@ h1{
   touch-action:manipulation;
 }
 .dog.hit{
-  animation: hit .18s;
+  animation: hit .15s;
 }
 @keyframes hit{
   0%{transform:translate(-50%,-50%) scale(1)}
   50%{transform:translate(-50%,-50%) scale(.9)}
   100%{transform:translate(-50%,-50%) scale(1)}
 }
-.dog .emoji{
-  font-size:90px;
-}
+.emoji{font-size:90px}
 
 /* BUBBLE */
 .bubble{
@@ -80,32 +82,50 @@ h1{
   top:-12px;
   left:50%;
   transform:translate(-50%,-100%);
-  background:rgba(0,0,0,.8);
-  border:1px solid rgba(255,255,255,.3);
+  background:rgba(0,0,0,.7);
   padding:10px 14px;
   border-radius:18px;
   font-size:14px;
-  text-align:center;
   opacity:0;
   transition:.25s;
   white-space:nowrap;
 }
 .bubble.show{opacity:1}
 
+/* POPUP */
+.popup{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+}
+.popup.show{display:flex}
+.popup-box{
+  background:#ff69b4;
+  padding:22px;
+  border-radius:20px;
+  text-align:center;
+  font-weight:700;
+  max-width:90%;
+}
+
 /* CONTROLS */
 .controls{
   display:flex;
-  gap:10px;
-  margin-top:12px;
+  gap:8px;
+  margin-top:10px;
 }
 button{
   flex:1;
-  padding:12px;
-  font-size:15px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.25);
-  background:rgba(255,255,255,.1);
+  padding:10px;
+  border-radius:14px;
+  border:none;
+  background:#ff4fa3;
   color:#fff;
+  font-size:14px;
 }
 button:active{transform:scale(.97)}
 </style>
@@ -115,9 +135,21 @@ button:active{transform:scale(.97)}
 <div class="container">
   <h1>🐶 Quỳnh Anh đập Hải Việt</h1>
 
-  <div class="score" id="score">
-    Số lần Hải Việt bị Quỳnh Anh đập: 0
+  <div class="time-select">
+    Bạn muốn đập Hải Việt trong bao lâu? Hãy lựa chọn:
+    <br>
+    <select id="timeSelect">
+      <option value="">Mặc định: 1 phút</option>
+      <script>
+        for(let i=1;i<=60;i++){
+          document.write(`<option value="${i}">${i} phút</option>`);
+        }
+      </script>
+    </select>
   </div>
+
+  <div class="timer" id="timer">Thời gian còn lại: 60s</div>
+  <div class="score" id="score">Số lần Hải Việt bị Quỳnh Anh đập: 0</div>
 
   <div class="board" id="board">
     <div class="dog" id="dog">
@@ -128,79 +160,113 @@ button:active{transform:scale(.97)}
 
   <div class="controls">
     <button onclick="start()">▶ Start</button>
+    <button onclick="feed()">🍽 Cho Hải Việt ăn</button>
     <button onclick="resetGame()">🔄 Reset</button>
   </div>
 </div>
 
+<div class="popup" id="popup">
+  <div class="popup-box" id="popupText"></div>
+</div>
+
 <script>
-const board = document.getElementById("board");
 const dog = document.getElementById("dog");
 const bubble = document.getElementById("bubble");
 const scoreEl = document.getElementById("score");
+const timerEl = document.getElementById("timer");
+const timeSelect = document.getElementById("timeSelect");
+const popup = document.getElementById("popup");
+const popupText = document.getElementById("popupText");
 
-let hits = 0;
-let running = false;
+let hits=0, running=false, timeLeft=60, timerId=null;
 
-function moveDog(){
-  const r = board.getBoundingClientRect();
-  const x = Math.random()*(r.width-240)+120;
-  const y = Math.random()*(r.height-240)+120;
-  dog.style.left = x+"px";
-  dog.style.top  = y+"px";
+/* SOUND */
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+function playHitSound(){
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type="square";
+  osc.frequency.value=180;
+  gain.gain.value=0.2;
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime+0.05);
 }
 
-function showBubble(text){
-  bubble.textContent = text;
+function moveDog(){
+  const b=document.getElementById("board").getBoundingClientRect();
+  dog.style.left=Math.random()*(b.width-240)+120+"px";
+  dog.style.top=Math.random()*(b.height-240)+120+"px";
+}
+
+function showBubble(t){
+  bubble.textContent=t;
   bubble.classList.add("show");
   setTimeout(()=>bubble.classList.remove("show"),1500);
 }
 
-function specialMessage(){
-  if(hits === 36){
-    showBubble("🎉 Chúc mừng bạn đã đập Hải Việt được 36 lần, xin tặng bạn 1 bó rau má 🥬");
-    return;
-  }
-  if(hits === 20){
-    showBubble("Bạn đừng đập nữa, Hải Việt đau lắm rồi :((");
-  }
+function dogSpeak(){
+  if(hits%10===0) showBubble("Thôi đừng đập tui nữa, đau thật đó 😭");
+  else if(hits%5===0) showBubble("Bạn bỏ qua cho tôi nha :<");
+  else if(hits%3===0) showBubble("Bạn ghét tôi lắm hả :<<");
+}
+
+function showPopup(text){
+  popupText.textContent=text;
+  popup.classList.add("show");
+  setTimeout(()=>popup.classList.remove("show"),2500);
 }
 
 function hit(){
   if(!running) return;
   hits++;
-  scoreEl.textContent =
-    `Số lần Hải Việt bị Quỳnh Anh đập: ${hits}`;
-
-  dog.classList.remove("hit");
-  void dog.offsetWidth;
-  dog.classList.add("hit");
-
-  if(navigator.vibrate){
-    navigator.vibrate(30);
+  scoreEl.textContent=`Số lần Hải Việt bị Quỳnh Anh đập: ${hits}`;
+  dog.classList.remove("hit"); void dog.offsetWidth; dog.classList.add("hit");
+  playHitSound();
+  dogSpeak();
+  if(hits%36===0){
+    showPopup("🎉 CHÚC MỪNG BẠN ĐÃ ĐẬP HẢI VIỆT 36 LẦN, TẶNG BẠN 1 BÓ RAU MÁ 🥬");
   }
-
-  specialMessage();
   moveDog();
 }
 
-dog.addEventListener("touchstart", e=>{
-  e.preventDefault();
-  hit();
-});
-dog.addEventListener("click", hit);
+dog.addEventListener("touchstart",e=>{e.preventDefault();hit();});
+dog.addEventListener("click",hit);
 
 function start(){
-  running = true;
+  if(running) return;
+  running=true;
+  hits=0;
+  scoreEl.textContent="Số lần Hải Việt bị Quỳnh Anh đập: 0";
+  timeLeft=(+timeSelect.value||1)*60;
+  timerEl.textContent=`Thời gian còn lại: ${timeLeft}s`;
+  timerId=setInterval(()=>{
+    timeLeft--;
+    timerEl.textContent=`Thời gian còn lại: ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(timerId);
+      running=false;
+      showPopup(`🎉 Chúc mừng bạn đã đập Hải Việt được ${hits} lần`);
+    }
+  },1000);
   moveDog();
 }
+
 function resetGame(){
-  running = false;
-  hits = 0;
-  scoreEl.textContent =
-    "Số lần Hải Việt bị Quỳnh Anh đập: 0";
+  running=false;
+  clearInterval(timerId);
+  hits=0;
+  timeLeft=60;
+  scoreEl.textContent="Số lần Hải Việt bị Quỳnh Anh đập: 0";
+  timerEl.textContent="Thời gian còn lại: 60s";
   bubble.classList.remove("show");
+}
+
+function feed(){
+  showBubble("CÁM ƠN BẠN NHA, IU BẠN LẮM 🥰");
 }
 moveDog();
 </script>
 </body>
 </html>
+  
